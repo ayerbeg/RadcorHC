@@ -1,0 +1,60 @@
+#ifndef HCSpacePhase_h
+#define  HCSpacePhase_h 1
+
+#include "string.h"
+#include "string"
+#include <fstream>
+#include <sstream>
+
+#include "TString.h"
+
+#include "HCVariables.hh"
+
+using namespace std;
+
+class HCSpacePhase
+{
+public:
+  HCSpacePhase();
+  ~HCSpacePhase();
+
+  void create_space_phase();
+  double sinsq();
+  double Theta();
+
+
+  const Double_t rad2deg = 180./(4.*atan(1.));
+
+  double W2threshold;
+ 
+  double Es_max;
+  double Es_min;
+  double Ep_max;
+  double mNuc;
+  int Esbins;
+
+  vector<double> vEs_PS;
+  vector<double> vEp_PS;
+
+  TString PSinfo;
+
+  // Getter
+  // vector<double> getEs() {
+  // return vEs_PS;}
+
+  vector<double> const &getEs() const { return vEs_PS; }
+
+  vector<double> const &getEp() const { return vEp_PS; }
+
+  
+  // vector<double> getEp() {
+  // return vEp_PS;}
+
+
+    
+};
+
+//extern HCSpacePhase *PSpace; // I should rename ALL the stuff as PhaseSpace
+
+#endif
+

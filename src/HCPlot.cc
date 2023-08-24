@@ -27,11 +27,11 @@ HCPlot::~HCPlot()
 
 void HCPlot::SelectPlot()
 {
+  cout<<Variables -> plotHe3XS3D<<" "<<Variables->nucleon<<endl;
   if(Variables -> plotPhaseSpace) Plot_phase_space();
   if(Variables -> plotStructureF) PlotSF();
-  if( Variables -> plotCrossSecHe3) PlotHe3XS();
-
-  
+  if(Variables -> plotCrossSecHe3 && (Variables->nucleon) == "He3") PlotHe3XS();
+  if(Variables -> plotHe3XS3D && (Variables->nucleon) == "He3")  PlotHe3XS3D();
 }
 
 
@@ -230,8 +230,43 @@ void HCPlot::PlotHe3XS()
   grXS -> GetHistogram()->SetYTitle("Cross-Section [nb/MeV/sr]");
   grXS -> Draw("AL");
 
-  
-
 }
+
+void HCPlot::PlotHe3XS3D()
+{
+
+ cHe3XS3D = new TCanvas("cHeXS3D","He3 Cross Section",1);
+
+ mg = new TMultiGraph();
+ 
+ int pad_idx = Spectra -> NoEsBins;
+ 
+ for (Int_t i=0;i<pad_idx;i++) 
+   {
+     gr.push_back( new TGraph(Spectra-> vvEsCS[i].size(),  &(Spectra-> vvnuCS[i][0]), &(Model->vvXS[i][0]) ));
+     gr[i]->SetLineWidth(4);
+     if(i%5 ==0)
+       {
+      gr[i]->SetTitle(Form("%.2f", Spectra->vvEsCS[i][0]));
+      gr[i]->GetHistogram()->SetTitleSize(0.0005,"t");
+
+      
+       }
+     else
+	{
+	  gr[i]->SetTitle("");
+	}
+     mg ->Add(gr[i]);
+   }
+ mg->SetTitle("He3 Cross-section; #nu [GeV]; Cross-Section [nb/MeV/sr]; E_{s}[GeV]");
+ mg->GetHistogram()->GetXaxis()->SetRangeUser(0.,10.0);
+ 
+ mg->Draw("a plc fb l3d");
+}
+
+
+
+
+
 
 HCPlot *Plot = NULL;

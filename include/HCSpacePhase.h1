@@ -1,0 +1,64 @@
+#ifndef HCSpacePhase_h
+#define HCSpacePhase_h 1
+
+#include "string.h"
+#include "string"
+#include <fstream>
+#include <sstream>
+
+#include "TString.h"
+
+using namespace std;
+
+class HCSpacePhase
+{
+public:
+  HCSpacePhase();
+  ~HCSpacePhase();
+  
+  
+  void create_space_phase(TString mainFolder,
+			  double mNuc );
+    
+    
+  void CreateSpectra(TString mainFolder,
+		     TString nucFolder,
+		     double (CSEp_min),
+		     vector<double> vgrEs,
+		     vector<double> vgrEp,
+		     TString &folder02,
+		     vector<vector<double>> &vvEsCS,
+		     vector<vector<double>> &vvEpCS,
+		     vector<vector<double>> &vvnuCS);
+
+
+  // Setter
+  void setSalary(int s) {
+    salary = s;
+  }
+  // Getter
+  int getSalary() {
+    return salary;
+  }
+  
+  
+  double W2threshold;
+  double Theta;
+  double sinsq;
+  double Es_max;
+  double Es_min;
+  double Ep_max;
+
+  int Esbins;
+
+  vector<double> vEs_PS;
+  vector<double> vEp_PS;
+
+
+
+
+
+  
+  
+};
+

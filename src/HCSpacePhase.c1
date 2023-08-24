@@ -1,0 +1,245 @@
+#include "HCSpacePhase.hh"
+#include "Rtypes.h"
+
+#include <iostream>
+#include "string.h"
+#include "string"
+#include <fstream>
+#include <sstream>
+
+#include "TString.h"
+
+using namespace std;
+
+
+
+HCSpacePhase::HCSpacePhase()
+{
+  cout << "<HCSpacePhase::HCSpacePhase>: LOADING" << endl;
+  //  inputfile = "options.ini";
+}
+
+HCSpacePhase::~HCSpacePhase()
+{
+  cout << "<HCSpacePhase::~HCSpacePhase>: END" << endl;
+}
+
+
+
+
+
+
+
+void HCSpacePhase::create_space_phase(TString mainFolder,
+				      double mNuc)
+{
+
+  //***************  KIN SET  ************************
+  cout<<"********create space phase*****************"<<endl;
+  
+  W2threshold = pow(Variables->WThreshold,2); 
+
+  // Angle of the spectrometer (kinematics) in rad
+  cout<<"Theta: "<<Variables->gTheta<<endl;
+  Theta =  Variables->gTheta/rad2deg; // min acceptance angle Murchana thesis
+
+  sinsq = pow(sin((Theta)/2.),2); //sin^2(theta/2) --> just to simplify
+
+   Es_max = Variables->  gBeam ;
+  
+
+  
+  // IN PRINCIPLE, Variables->Ep_min should be determine by the experiment
+
+
+  // I am using round_number to keep certain limited precision. Somehow it is legacy of how Melanie
+  // presented her data. 
+  Es_min = round_number2((W2threshold - pow(mNuc,2) + 2*mNuc*Variables->Ep_min )/( 2*mNuc - 4*Variables->Ep_min  *sinsq) );
+  Ep_max   = ( pow(mNuc,2) + 2*mNuc*Es_max - W2threshold )/( 2*mNuc + 4*Es_max*sinsq);
+  
+
+
+  // the phase-space folder
+  TString PSinfo = mainFolder+"/PS_limits";
+  gSystem->MakeDirectory(PSinfo);   
+
+  // the phase-space data
+  ofstream outfile;
+  outfile.open(Form(PSinfo+"/Theta.%.2f.Eprime.%.2f.dat", Theta*rad2deg, Variables->Ep_min  ) );  
+
+  
+
+   
+	    
+  cout<<"Es_min: "<<(W2threshold - pow(mNuc,2) + 2*mNuc*Variables->Ep_min )/( 2*mNuc - 4*Variables->Ep_min  *sinsq)<<endl;
+  
+  cout<<"mNuc: "<<mNuc<<endl;
+  
+  // I don't need to store the round maximum value, but it is calculated for sanity
+
+  // My intention is to create a general code, but it is greatly dependent of certain values
+  // like the energy beam. For instance we want 0.1 GeV space bins in Es, but the last bin, can only
+  // 0.08 so it needed to be hard codes. Maybe, we can make a code to determine when the division is
+  // not exact and add the last bin.
+  
+  // we need to calculate the number of bins from Es_min and Es_max (10.300) with 0.1 GeV spacing
+  // because we round Es_min up to two significatn figures, we assure that the number of bins
+  // is integer, not just because we defined it integer (that would truncate the number)
+  // Last bin, as suggested by Melanie's theses, will be of 0.8 and added later
+
+  double EsBinSize = 0.1;
+  Esbins = ((Es_max - 0.080 ) - Es_min  ) /(EsBinSize );
+
+    //*****************************************************************
+  // These lines created the spectrum of Ep vs Es in steps of 0.1 GeV
+  // and rounded to the 3rd decimal
+  //*****************************************************************
+  for (int Esidx = 0; Esidx <= Esbins; Esidx++)
+    {
+      vEs_PS.push_back(Es_min + EsBinSize *Esidx);
+  
+      vEp_PS.push_back(round_number3(( pow(mNuc,2) + 2*mNuc*vEs_PS[Esidx] - W2threshold)/( 2*mNuc + 4*vEs_PS[Esidx]*sinsq) ) );
+    }
+  
+  // This extra line is to include the last bin which won't fit the bin separation criteria odf 0.1GeV
+  vEs_PS.push_back(Es_max);
+  vEp_PS.push_back(round_number3(( pow(mNuc,2) + 2*mNuc*vEs_PS[Esbins+1] - W2threshold) /( 2*mNuc + 4*vEs_PS[Esbins+1]*sinsq)) );
+  
+  	  
+  //*********************************************************************************
+  // These lines store in a ASCII file the Ep-bin vs Es-bin for each Variables->Ep_min and Theta
+  // rounded to the second decimal (Es) and third decimal (Ep)
+  // Also creates the folder with the .dat files with the steps to feed the models
+   for (int gr_idx0 = 0; gr_idx0 < vEs_PS.size(); gr_idx0++)
+   {
+      outfile << fixed << setprecision(3) << vEs_PS[gr_idx0] <<" " << vEp_PS[gr_idx0] <<"\n";
+   }
+  //*********************************************************************************
+
+  //	   cout<<"Es size: "<< vgrEsELA  .size()<<" Ep size: "<< vgrEpELA  .size()<<" ELABins: "<< ELAbins<<endl;  
+  outfile.close();
+  
+  if (plotPhaseSpace)
+    Plot_phase_space(vEs_PS, vEp_PS, Es_min,Es_max, Variables->Ep_min,Ep_max, Theta );
+
+
+  return;
+}
+
+
+
+
+//*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
+void HCSpacePhase:: CreateSpectra(TString mainFolder,
+		   TString nucFolder,
+		   double (CSEp_min),
+		   vector<double> vgrEs,
+		   vector<double> vgrEp,
+		   TString &folder02,
+		   vector<vector<double>> &vvEsCS,
+		   vector<vector<double>> &vvEpCS,
+		   vector<vector<double>> &vvnuCS)
+{
+
+  cout<<"*******create spectra*************"<<endl;
+  
+
+  double Theta =  Variables->gTheta/rad2deg;
+  cout<<"Theta: "<<Variables->gTheta<<endl;
+  
+  TString angle_fol;
+
+  angle_fol = Form("/%2.2f", Theta *rad2deg);
+  
+  TString folder01= mainFolder+angle_fol+"deg/"; 
+  folder02= folder01+nucFolder;
+ 
+  gSystem->MakeDirectory(folder01);
+  gSystem->MakeDirectory(folder02); 
+
+  // The folder02 is the FinalFolder used internally in the rest of the code
+  // it is specific for the angle set in options.ini
+  // Perhaps it should be improved for similar angle but other characteristics
+  // as is right now, it will overwrite any data present.
+
+  // Keeping the philosophy of working without reading any of the created files
+  // we need to store the output here in containers to send to the next method
+  // but we save the data as was done with the single scripts
+
+  ofstream spectra;
+  
+  Int_t file_id = 0;
+
+  Double_t Es, Ep;
+
+  Int_t file_idx =0;
+  Double_t nu, EpDelta;
+
+  // These vectors contain the data of a given Es bin
+  vector<double> vEs;
+  vector<double> vEp;
+  vector<double> vnu;
+
+  // These vectors contain all the spectra
+  // vector<vector<double>> vvEsCS;
+  // vector<vector<double>> vvEpCS;
+  // vector<vector<double>> vvnuCS;
+  
+  int NoEsBins = vgrEs.size();
+  Double_t delta = 0;
+
+
+  
+  gSystem->MakeDirectory(folder02+"/spectra");
+  
+  for (int idx = 0; idx< NoEsBins; idx++)
+    {
+      Es = vgrEs[idx];
+      Ep = vgrEp[idx];
+      EpDelta = Ep;
+
+      
+      TString fileDIS = folder02+"/spectra"+Form("/%d.dat", file_id );
+
+      spectra.open(fileDIS);
+      
+      while( EpDelta >=(CSEp_min -(0.001) ) )
+	{
+	  nu = Es - EpDelta;
+	  vEs.push_back(Es);
+	  vEp.push_back(EpDelta);
+	  vnu.push_back(nu);
+	  
+	  spectra<< Es<<" "<<EpDelta<<" "<<nu<<"\n";
+	  delta++;
+	  EpDelta = Ep - 0.01* delta;
+	}
+
+      // There are two ways to pass the data to the clas model
+      // I can pass it as the spectrum is created
+      // so, just need to call the function here and pass
+      // the vector with the info of the present spectra
+      // The other option, used here, is to pass the whole information
+      // Probably, in memory usage, the first is more efficient
+      
+      vvnuCS.push_back(vnu);
+      vvEsCS.push_back(vEs);
+      vvEpCS.push_back(vEp);
+
+      vEs.clear();
+      vEp.clear();
+      vnu.clear();
+      
+      spectra.close();
+      file_id++;
+      // clas_model method should be called here.
+      // the arguments should be vectors of Es, Ep(steps), nu, file_id
+      delta = 0;
+
+    }
+
+  cout<<"size: "<<vvnuCS.size()<<endl;
+  
+}
+

@@ -1,0 +1,59 @@
+#ifndef HCModel_h
+#define  HCModel_h 1
+
+#include "string.h"
+#include "string"
+#include <fstream>
+#include <sstream>
+
+#include "TString.h"
+
+#include "HCVariables.hh"
+
+using namespace std;
+
+class HCModel
+{
+public:
+  HCModel();
+  ~HCModel();
+
+// Order and declaration of the arguments:
+  // (i)file_idx, (d)W2, (d)Q2, (c)Target, (i)YoniIndex,
+  // (i)IPOL, (i)IA1, (i)SFC, (i)Asym, (c)reso,
+  // (d)F1, (d)F2, (d)g1, (d)g2, (d)A1, (d)A2
+  
+extern"C"{
+  void strucfunc_(int *, double *, double *, char *, int *, int *, int *, int *, int *, char *, double *, double *, double *, double *, double *, double *);
+}
+  
+  void clas_model(TString storeFolderCM,
+		  TString nucleonCM,
+		  double mNuc,
+		  vector<vector<double>>EsCM,
+		vector<vector<double>>nuCM,
+		  vector<vector<double>>EpCM,
+		  vector<vector<double>> &vvF1CM,
+		  vector<vector<double>> &vvF2CM
+		  );
+  void MakeCross(vector<vector<double>> vvEsMC,
+		 vector<vector<double>> vvnuMC,
+		 vector<vector<double>> vvF1neuMC,
+		 vector<vector<double>> vvF2neuMC,
+		 vector<vector<double>> vvF1proMC,
+		 vector<vector<double>> vvF2proMC,
+		 TString SaveFolder);
+  double He3CrossSection( Double_t tE,  Double_t tnu, Double_t  tAngle, Double_t  tF1,  Double_t tF2);
+  double calcQ2(double Ei, double Ef, double Th);
+  double calcW2(double mp, double nulocal, double Q2local);
+  
+  
+    
+};
+
+extern HCModel *Model; // I should rename ALL the stuff as PhaseSpace
+
+#endif
+
+
+  

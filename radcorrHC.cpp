@@ -109,7 +109,8 @@ int main(int argc, char *argv[])
 
   if(Variables -> plotPhaseSpace ||
      Variables -> plotStructureF ||
-     Variables -> plotCrossSecHe3)
+     Variables -> plotCrossSecHe3||
+     Variables -> plotHe3XS3D )
     {
       Plot = new HCPlot();
       Plot-> SelectPlot();

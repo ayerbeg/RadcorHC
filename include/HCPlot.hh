@@ -13,6 +13,8 @@
 #include "TLine.h"
 #include "TLegend.h"
 #include "TString.h"
+#include "TMultiGraph.h"
+
 
 #include "HCVariables.hh"
 #include "HCSpacePhase.hh"
@@ -35,6 +37,7 @@ public:
   void GraphSF();
   
   void PlotHe3XS();
+  void PlotHe3XS3D();
 
 
   TGraph *grDIS;
@@ -67,6 +70,12 @@ public:
   TCanvas *cHe3XS;
   TGraph *grXS;
   vector<double> vXS;
+
+
+  TCanvas *cHe3XS3D;;
+  TMultiGraph *mg;
+  vector<TGraph*> gr;
+  
 };
 
 extern HCPlot *Plot;

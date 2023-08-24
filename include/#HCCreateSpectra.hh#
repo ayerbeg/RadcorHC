@@ -1,0 +1,57 @@
+#ifndef HCCreateSpectra_h
+#define HCCreateSpectra_h 1
+
+#include "string.h"
+#include "string"
+#include <fstream>
+#include <sstream>
+#include "TSystem.h"
+#include "TString.h"
+
+using namespace std;
+
+class HCCreateSpectra
+{
+public:
+  HCCreateSpectra();
+  ~HCCreateSpectra();
+
+
+  const Double_t rad2deg = 180./(4.*atan(1.));
+  
+  void CreateSpectra();
+  void CreateFolder(double);
+  double W2threshold();
+  double Ep_max();
+  double sinq();
+  
+
+  ofstream spectra;
+  
+  Int_t file_id = 0;
+
+  Double_t Es, Ep;
+
+  Int_t file_idx =0;  
+  Double_t nu, EpDelta;
+
+  // These vectors contain the data of a given Es bin
+  vector<double> vEs;
+  vector<double> vEp;
+  vector<double> vnu;
+
+  Double_t delta = 0;
+
+  // is this working?
+  double Theta =  Variables->gTheta/rad2deg; // min acceptance angle Murchana thesis
+  double Es_max = Variables -> gBeam ; //Note: for similar phase-space but different energy, changing this should be enough
+
+
+  Double_t Es_min;
+
+  // IN PRINCIPLE, Variables->Ep_min should be determine by the experiment
+  Double_t Ep_max;
+  
+};
+
+#endif
